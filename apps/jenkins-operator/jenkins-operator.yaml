@@ -13,6 +13,8 @@ spec:
     chart: jenkins-operator
     helm:
       values: |
+        backup:
+          enabled: false
         jenkins:
           enabled: true
           # image: jenkins/jenkins:2.319.2-lts-alpine
@@ -31,10 +33,10 @@ spec:
             value: "test"
           namespace: jenkins-operator
           # serviceAccount: jenkins-service-account
-          backup:
-            pvc:
-              className: "standard"
-              storageClassName: "standard"
+          #backup:
+          #  pvc:
+          #    className: "standard"
+          #    storageClassName: "standard"
           basePlugins:
           - name: kubernetes
             version: "1.31.2"
