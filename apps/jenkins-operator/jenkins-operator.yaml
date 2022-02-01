@@ -13,9 +13,11 @@ spec:
     chart: jenkins-operator
     helm:
       values:
-        backup:
-          enabled: "false"
+        #backup:
+        #  enabled: "false"
         jenkins:
+          backup:
+            enabled: false
           enabled: true
           # image: jenkins/jenkins:2.319.2-lts-alpine
           env:
