@@ -8,7 +8,7 @@ spec:
   source:
     chart: jenkins
     repoURL: https://charts.jenkins.io
-    # targetRevision: 1.16.1
+    targetRevision: 3.11.3
     helm:
       releaseName: jenkins
   destination:
