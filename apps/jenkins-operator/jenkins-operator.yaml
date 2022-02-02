@@ -87,7 +87,7 @@ spec:
             successThreshold: 1
             timeoutSeconds: 8
           backup:
-            enabled: true
+            enabled: false
             image: virtuslab/jenkins-operator-backup-pvc:v0.1.0
             containerName: backup
             interval: 30
