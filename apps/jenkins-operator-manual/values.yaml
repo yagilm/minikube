@@ -33,7 +33,16 @@ jenkins:
   image: jenkins/jenkins:2.319.1-lts-alpine
 
   # env contains jenkins container environment variables
-  env: []
+  # env: []
+  # env:
+  # - name: JAVA_OPTS
+  #   value: "-Djenkins.install.runSetupWizard=false -Djava.awt.headless=true"
+  env:
+  - name: JAVA_OPTS
+    value: "-Xmx2048m -XX:MaxPermSize=512m -XX:MinRAMPercentage=10.0 -XX:MaxRAMPercentage=80.0 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true"
+  # - name: JENKINS_HOME
+  #   value: "/var/lib/jenkins"
+
 
   # imagePullPolicy defines policy for pulling images
   imagePullPolicy: Always
@@ -132,10 +141,10 @@ jenkins:
   resources:
     limits:
       cpu: 1000m
-      memory: 3Gi
+      memory: 5Gi
     requests:
       cpu: 1
-      memory: 500Mi
+      memory: 4Gi
 
   # volumes used by Jenkins
   # By default, we are only using backup
@@ -172,7 +181,7 @@ jenkins:
       path: /login
       port: http
       scheme: HTTP
-    initialDelaySeconds: 100
+    initialDelaySeconds: 200
     periodSeconds: 10
     successThreshold: 1
     timeoutSeconds: 8
