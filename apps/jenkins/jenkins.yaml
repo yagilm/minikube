@@ -11,7 +11,7 @@ spec:
     targetRevision: 3.11.3
     helm:
       releaseName: jenkins
-      values:
+      values: |
         controler:
           installPlugins:
           - kubernetes:1.31.3
@@ -19,7 +19,6 @@ spec:
           - git:4.10.2
           - configuration-as-code:1.55.1
           - kubernetes-credentials-provider:0.20
-
   destination:
     server: https://kubernetes.default.svc
     namespace: jenkins
