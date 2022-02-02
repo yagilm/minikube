@@ -13,29 +13,25 @@ spec:
     chart: jenkins-operator
     helm:
       values:
-        #backup:
-        #  enabled: "false"
         jenkins:
-          # image: jenkins/jenkins:2.319.2-lts-alpine
+          enabled: true
+          apiVersion: jenkins.io/v1alpha2
+          name: jenkins
+          namespace: jenkins
+          labels: {}
+          annotations: {}
+          image: jenkins/jenkins:2.319.1-lts-alpine
           env:
           - name: JAVA_OPTS
-            value: "-Djenkins.install.runSetupWizard=false -Djava.awt.headless=true -Djava.net.useSystemProxies=true -Dhttp.nonProxyHosts=localhost"
-          - name: "JENKINS_URL"
-            value: "http://jenkins-operator-http-jenkins.svc.cluster.local:8080"
-          - name: "JENKINS_TUNNEL"
-            value: "jenkins-operator-slave-jenkins.svc.cluster.local:50000"
-          - name: "DEBUG_JENKINS_OPERATOR"
-            value: "true"
-          # - name: no_proxy
-          #   value: "127.0.0.1,localhost,91.123.96.29,10.233.0.0/16,10.234.0.0/16,.svc,.svc.cluster.local"
-          - name: manos
-            value: "test"
-          namespace: jenkins-operator
-          # serviceAccount: jenkins-service-account
-          #backup:
-          #  pvc:
-          #    className: "standard"
-          #    storageClassName: "standard"
+            value: "-Xmx2048m -XX:MaxPermSize=512m -XX:MinRAMPercentage=10.0 -XX:MaxRAMPercentage=80.0 -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true"
+          imagePullPolicy: Always
+          priorityClassName: ""
+          disableCSRFProtection: false
+          validateSecurityWarnings: false
+          imagePullSecrets: []
+          notifications: []
+          serviceAccount:
+             annotations: {}
           basePlugins:
           - name: kubernetes
             version: "1.31.2"
@@ -51,18 +47,105 @@ spec:
             version: "1.55"
           - name: kubernetes-credentials-provider
             version: "0.20"
-      parameters:
-        - name: installCRDs
-          value: "false"
-        - name: serviceAccountName
-          value: "jenkins-operator"
-      # parameters: |
-      #   # - name: installCRDs
-      #   #   value: 'false'
-      #   #- name: extraArgs[0]
-      #   #  value: '--dns01-recursive-nameservers=coredns.kube-system.svc.cluster.local:53'
-      #   #- name: extraArgs[1]
-      #   #  value: '--dns01-recursive-nameservers-only'
+          plugins: []
+          seedJobs: []
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 5Gi
+            requests:
+              cpu: 1
+              memory: 4Gi
+          volumes:
+          - name: backup # PVC volume where backups will be stored
+            persistentVolumeClaim:
+              claimName: jenkins-backup
+                namespace: jenkins-operator
+          volumeMounts: []
+          authorizationStrategy: createUser
+          securityContext:
+            runAsUser: 1000
+            fsGroup: 1000
+          livenessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /login
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 200
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 8
+          readinessProbe:
+            failureThreshold: 60
+            httpGet:
+              path: /login
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 8
+          backup:
+            enabled: true
+            image: virtuslab/jenkins-operator-backup-pvc:v0.1.0
+            containerName: backup
+            interval: 30
+            makeBackupBeforePodDeletion: true
+            backupCommand:
+              - /home/user/bin/backup.sh
+            restoreCommand:
+              - /home/user/bin/restore.sh
+            getLatestAction:
+              - /home/user/bin/get-latest.sh
+            pvc:
+              enabled: true
+              size: 5Gi
+              className: ""
+            resources:
+              limits:
+                cpu: 1000m
+                memory: 2Gi
+              requests:
+                cpu: 100m
+                memory: 500Mi
+            env:
+              - name: BACKUP_DIR
+                value: /backup
+              - name: JENKINS_HOME
+                value: /jenkins-home
+              - name: BACKUP_COUNT
+                value: "3" # keep only the 3 most recent backups
+            volumeMounts:
+              - name: jenkins-home
+                mountPath: /jenkins-home # Jenkins home volume
+              - mountPath: /backup # backup volume
+                name: backup
+          configuration:
+            configurationAsCode: {}
+            groovyScripts: {}
+            secretRefName: ""
+            secretData: {}
+        operator:
+          replicaCount: 1
+          image: virtuslab/jenkins-operator:v0.7.0
+          imagePullPolicy: IfNotPresent
+          imagePullSecrets: []
+          nameOverride: ""
+          fullnameOverride: ""
+          resources: {}
+          nodeSelector: {}
+          tolerations: []
+          affinity: {}
+        webhook:
+          certificate:
+            name: webhook-certificate
+            duration: 2160h
+            renewbefore: 360h
+          enabled: false
+        cert-manager:
+          startupapicheck:
+            enabled: false
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: jenkins-operator
